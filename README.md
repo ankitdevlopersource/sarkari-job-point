@@ -33,44 +33,7 @@ This project includes a clean UI and a custom **Admin Panel** to manage posts an
 * **Deployment:** Render
 * **Version Control:** Git & GitHub
 
----
-
-## ⚙️ Installation & Setup
-
-Clone the repository:
-
-```bash
-git clone https://github.com/your-username/sarkari-job-point.git
-cd sarkari-job-point
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Run the development server:
-
-```bash
-npm start
-```
-
----
-
-## 🔐 Environment Variables
-
-Create a `.env` file in the root directory and add:
-
-```
-PORT=5000
-JWT_SECRET=your_secret_key
-```
-
-⚠️ Do NOT share your `.env` file publicly.
-
----
-
+--
 ## 🛠️ Admin Panel
 
 * Secure admin login system
