@@ -18,7 +18,7 @@ import bcrypt from 'bcryptjs';
 dotenv.config();
 
 // Explicitly set the project ID for Google SDKs to prevent it from defaulting to the container's project
-import firebaseConfig from './firebase-applet-config.json' assert { type: 'json' };
+import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 process.env.GOOGLE_CLOUD_PROJECT = firebaseConfig.projectId;
 
 // Suppress gRPC idle stream warnings which are common in Node.js environments
@@ -113,7 +113,7 @@ const formatClientDoc = (doc: any) => {
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 10000;
 
   app.use(express.json());
   app.use(helmet({
