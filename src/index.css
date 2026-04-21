@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Custom prose-like styles for markdown */
+.prose h1 { @apply text-3xl font-black mb-6 mt-8 text-gray-900; }
+.prose h2 { @apply text-2xl font-bold mb-4 mt-8 text-gray-900 border-b border-gray-100 pb-2; }
+.prose h3 { @apply text-xl font-bold mb-3 mt-6 text-gray-800; }
+.prose p { @apply text-gray-700 leading-relaxed mb-4; }
+.prose ul { @apply list-disc list-inside mb-4 space-y-2; }
+.prose li { @apply text-gray-700; }
+.prose strong { @apply font-bold text-gray-900; }
+.prose a { @apply text-red-600 font-bold hover:underline; }
+.prose table { @apply w-full border-collapse mb-6 mt-4; }
+.prose th, .prose td { @apply border border-gray-300 p-2 text-left text-sm; }
+.prose th { @apply bg-gray-50 font-bold; }
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

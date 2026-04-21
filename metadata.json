@@ -1,0 +1,6 @@
+{
+  "name": "Sarkari Job AI",
+  "description": "AI-powered government job updates and blog platform with automated scraping and content generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI Content Generation", "Automated Job Scraping", "Admin Dashboard"]
+}
