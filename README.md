@@ -1,20 +1,116 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 🚀 Sarkari Job Point
 
-# Run and deploy your AI Studio app
+A modern **Sarkari Job Updates Platform** that provides the latest information about government jobs, admit cards, results, and official notifications across India.
 
-This contains everything you need to run your app locally.
+This project includes a clean UI and a custom **Admin Panel** to manage posts and pages efficiently.
 
-View your app in AI Studio: https://ai.studio/apps/d9fc0d20-099c-4b24-a9a8-927f71da4b32
+---
 
-## Run Locally
+## 🌐 Live Demo
 
-**Prerequisites:**  Node.js
+👉 (Add your live website link here)
+
+---
+
+## ✨ Features
+
+* 📢 Latest Government Job Updates
+* 🎫 Admit Card Notifications
+* 📊 Results & Exam Updates
+* 📝 SEO-Friendly Blog Structure
+* 🔍 Search Functionality
+* 📱 Fully Responsive Design
+* 🛠️ Custom Admin Panel
+* 📄 Editable Static Pages (About, Contact, Privacy Policy, Disclaimer)
+
+---
+
+## 🧑‍💻 Tech Stack
+
+* **Frontend:** React.js
+* **Backend:** Node.js / Express.js
+* **Database:** (MongoDB / JSON / Your choice)
+* **Deployment:** Render
+* **Version Control:** Git & GitHub
+
+---
+
+## ⚙️ Installation & Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/your-username/sarkari-job-point.git
+cd sarkari-job-point
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
+
+```bash
+npm start
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the root directory and add:
+
+```
+PORT=5000
+JWT_SECRET=your_secret_key
+```
+
+⚠️ Do NOT share your `.env` file publicly.
+
+---
+
+## 🛠️ Admin Panel
+
+* Secure admin login system
+* Create, edit, and delete blog posts
+* Manage static pages
+* Site settings control
+
+---
+
+## 📌 Disclaimer
+
+This website is not affiliated with any government organization.
+All information is provided for educational and informational purposes only.
+Users are advised to verify details from official sources.
+
+---
+
+## 📞 Contact
+
+For any queries or suggestions:
+
+📧 Email: [ankitkumardopta@gmail.com](mailto:your-email@example.com)
+
+---
+
+## ⭐ Contributing
+
+Contributions are welcome!
+Feel free to fork the repository and submit a pull request.
+
+---
+<img width="1349" height="614" alt="image" src="https://github.com/user-attachments/assets/086f1471-2b85-494b-8e93-9d37b2c90387" />
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 📜 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 💡 Author
+
+Developed with ❤️ by Ankit Kumar
