@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { LayoutDashboard, FileText, RefreshCw, LogOut, Plus, Trash2, Edit, Users, Settings, Megaphone, Upload, ImageIcon, X, Bold as BoldIcon, Link as LinkIcon, Type, Eye, Code } from 'lucide-react';
+import { LayoutDashboard, FileText, RefreshCw, LogOut, Plus, Trash2, Edit, Users, Settings, Megaphone, Upload, ImageIcon, X, Bold as BoldIcon, Link as LinkIcon, Type, Eye, Code, Highlighter } from 'lucide-react';
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
@@ -108,8 +108,10 @@ export default function Admin() {
   const [editorTab, setEditorTab] = useState<'edit' | 'preview'>('edit');
   const [linkDialog, setLinkDialog] = useState<{ isOpen: boolean, type: 'general' | 'apply' | 'admit', url: string, start: number, end: number } | null>(null);
   const [colorSelection, setColorSelection] = useState<{ start: number, end: number } | null>(null);
+  const [bgColorSelection, setBgColorSelection] = useState<{ start: number, end: number } | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const bgColorInputRef = useRef<HTMLInputElement>(null);
 
   const applyFormat = (prefix: string, suffix: string, defaultValue?: string, forcedStart?: number, forcedEnd?: number) => {
     const textarea = textAreaRef.current;
@@ -133,6 +135,86 @@ export default function Admin() {
       const newStart = start + prefix.length;
       const newEnd = newStart + contentToWrap.length;
       textarea.setSelectionRange(newStart, newEnd);
+    }, 50);
+  };
+
+  const findExistingBackgroundSpan = (text: string, start: number, end: number) => {
+    const spanRegex = /<span\b([^>]*)style="([^"]*?\bbackground-color\s*:\s*[^";]*[^\"]*)"([^>]*)>([\s\S]*?)<\/span>/gi;
+    let match: RegExpExecArray | null;
+    while ((match = spanRegex.exec(text)) !== null) {
+      const fullMatch = match[0];
+      const openTagEnd = fullMatch.indexOf('>') + 1;
+      const innerContent = match[4];
+      const matchStart = match.index;
+      const matchEnd = matchStart + fullMatch.length;
+      const innerStart = matchStart + openTagEnd;
+      const innerEnd = innerStart + innerContent.length;
+
+      if (start >= innerStart && end <= innerEnd) {
+        return {
+          matchStart,
+          matchEnd,
+          openTag: fullMatch.slice(0, openTagEnd),
+          innerContent,
+          innerStart,
+          innerEnd
+        };
+      }
+    }
+    return null;
+  };
+
+  const applyBackgroundHighlight = (color: string, forcedStart?: number, forcedEnd?: number) => {
+    const textarea = textAreaRef.current;
+    if (!textarea) return;
+
+    const start = forcedStart !== undefined ? forcedStart : textarea.selectionStart;
+    const end = forcedEnd !== undefined ? forcedEnd : textarea.selectionEnd;
+    if (start === end) return;
+
+    const value = textarea.value;
+    const existing = findExistingBackgroundSpan(value, start, end);
+    if (existing) {
+      const newOpenTag = existing.openTag.replace(/background-color\s*:\s*[^;"']+/, `background-color:${color}`);
+      const newSpan = `${newOpenTag}${existing.innerContent}</span>`;
+      const newContent = value.slice(0, existing.matchStart) + newSpan + value.slice(existing.matchEnd);
+      setNewPost({ ...newPost, content: newContent });
+
+      setTimeout(() => {
+        textarea.focus();
+        const selectionStart = existing.matchStart + newOpenTag.length;
+        textarea.setSelectionRange(selectionStart, selectionStart + existing.innerContent.length);
+      }, 50);
+      return;
+    }
+
+    const prefix = `<span style="background-color:${color};">`;
+    const newContent = value.slice(0, start) + prefix + value.slice(start, end) + '</span>' + value.slice(end);
+    setNewPost({ ...newPost, content: newContent });
+
+    setTimeout(() => {
+      textarea.focus();
+      const selectionStart = start + prefix.length;
+      textarea.setSelectionRange(selectionStart, selectionStart + (end - start));
+    }, 50);
+  };
+
+  const removeBackgroundHighlight = (forcedStart?: number, forcedEnd?: number) => {
+    const textarea = textAreaRef.current;
+    if (!textarea) return;
+
+    const start = forcedStart !== undefined ? forcedStart : textarea.selectionStart;
+    const end = forcedEnd !== undefined ? forcedEnd : textarea.selectionEnd;
+    const value = textarea.value;
+    const existing = findExistingBackgroundSpan(value, start, end);
+    if (!existing) return;
+
+    const newContent = value.slice(0, existing.matchStart) + existing.innerContent + value.slice(existing.matchEnd);
+    setNewPost({ ...newPost, content: newContent });
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(existing.matchStart, existing.matchStart + existing.innerContent.length);
     }, 50);
   };
 
@@ -1308,6 +1390,21 @@ export default function Admin() {
                         }}
                       />
 
+                      <input 
+                        type="color" 
+                        ref={bgColorInputRef} 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const color = e.target.value;
+                          if (bgColorSelection) {
+                            applyBackgroundHighlight(color, bgColorSelection.start, bgColorSelection.end);
+                            setBgColorSelection(null);
+                          } else {
+                            applyBackgroundHighlight(color);
+                          }
+                        }}
+                      />
+
                       {/* Link Dialog Section */}
                       {linkDialog && linkDialog.isOpen && (
                         <div className="absolute top-0 left-0 w-full h-full z-20 bg-white border border-red-200 rounded-t-lg flex items-center px-2 gap-3 animate-in fade-in slide-in-from-top-1 duration-200 shadow-sm">
@@ -1369,6 +1466,33 @@ export default function Admin() {
                         title="Text Color"
                       >
                         <Type size={14} className="text-red-500" /> <span className="text-[10px] font-bold uppercase">Color</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          if (textAreaRef.current) {
+                            setBgColorSelection({
+                              start: textAreaRef.current.selectionStart,
+                              end: textAreaRef.current.selectionEnd
+                            });
+                          }
+                          bgColorInputRef.current?.click();
+                        }}
+                        className="p-1.5 px-3 hover:bg-white hover:shadow-sm rounded text-gray-700 transition-all flex items-center gap-1.5"
+                        title="Text Background Color"
+                      >
+                        <Highlighter size={14} className="text-amber-500" /> <span className="text-[10px] font-bold uppercase">BG Color</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); removeBackgroundHighlight(); }}
+                        className="p-1.5 px-3 hover:bg-white hover:shadow-sm rounded text-gray-700 transition-all flex items-center gap-1.5"
+                        title="Remove Highlight"
+                      >
+                        <X size={14} /> <span className="text-[10px] font-bold uppercase">Clear</span>
                       </button>
 
                       <div className="w-[1px] h-6 bg-gray-300 mx-1 self-center" />
