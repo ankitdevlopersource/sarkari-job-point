@@ -30,14 +30,18 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 // Middleware to verify JWT
 const authenticateAdmin = (req: any, res: any, next: any) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  if (!token) return res.status(401).json({ error: 'No token provided' });
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.admin = decoded;
     next();
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      res.status(401).json({ error: 'Token expired. Please login again.' });
+    } else {
+      res.status(401).json({ error: 'Invalid token' });
+    }
   }
 };
 
@@ -114,6 +118,7 @@ const formatClientDoc = (doc: any) => {
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 10000;
+  const siteUrl = process.env.APP_URL || `http://localhost:${PORT}`;
 
   app.use(express.json());
   app.use(helmet({
@@ -511,6 +516,84 @@ async function startServer() {
     }
   });
 
+  // --- SEO Endpoints ---
+  app.get('/robots.txt', (req, res) => {
+    const robots = `User-agent: *
+Allow: /
+Disallow: /avm-admin
+Sitemap: ${siteUrl}/sitemap.xml
+`;
+    res.type('text/plain');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(robots);
+  });
+
+  app.get('/sitemap.xml', async (req, res) => {
+    try {
+      const staticPages = [
+        '/',
+        '/latest-jobs',
+        '/results',
+        '/admit-cards',
+        '/syllabus',
+        '/notifications',
+        '/about',
+        '/contact',
+        '/privacy-policy',
+        '/disclaimer',
+      ];
+
+      const blogSnapshot = await getDocs(
+        query(
+          collection(clientDb, 'blogs'),
+          where('isPublished', '==', true),
+          orderBy('createdAt', 'desc'),
+          limit(1000)
+        )
+      );
+
+      const urls = staticPages.map((path) => ({
+        loc: `${siteUrl}${path}`,
+        lastmod: new Date().toISOString().split('T')[0],
+        changefreq: 'daily',
+        priority: path === '/' ? '1.0' : '0.8',
+      }));
+
+      blogSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (!data?.slug) return;
+        const lastmod = data.updatedAt?.seconds
+          ? new Date(data.updatedAt.seconds * 1000).toISOString().split('T')[0]
+          : data.createdAt?.seconds
+            ? new Date(data.createdAt.seconds * 1000).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0];
+
+        urls.push({
+          loc: `${siteUrl}/blog/${data.slug}`,
+          lastmod,
+          changefreq: 'weekly',
+          priority: '0.7',
+        });
+      });
+
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+        .map(
+          (url) => `  <url>\n    <loc>${url.loc}</loc>\n    <lastmod>${url.lastmod}</lastmod>\n    <changefreq>${url.changefreq}</changefreq>\n    <priority>${url.priority}</priority>\n  </url>`
+        )
+        .join('\n')}
+</urlset>`;
+
+      res.type('application/xml');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Failed to generate sitemap:', error);
+      res.status(500).send('Unable to generate sitemap at this time.');
+    }
+  });
+
   // --- Vite Setup ---
 
   if (process.env.NODE_ENV !== 'production') {
@@ -521,7 +604,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { maxAge: '1d' }));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

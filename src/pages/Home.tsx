@@ -1,17 +1,31 @@
 import { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../components/Seo';
 import Hero from '../components/Hero';
 import QuickLinks from '../components/QuickLinks';
 import TrendingJobs from '../components/TrendingJobs';
 import Sidebar from '../components/Sidebar';
 import StateGrid from '../components/StateGrid';
 import PopupAd from '../components/PopupAd';
-import { ChevronRight, MessageCircle, Send, Star } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  thumbnail: string;
+  category: string;
+  state: string;
+  content?: string;
+  placement?: string;
+  createdAt?: { seconds?: number; _seconds?: number; nanoseconds?: number } | null;
+  updatedAt?: { seconds?: number; _seconds?: number; nanoseconds?: number } | null;
+  metaDescription?: string;
+}
 
 export default function Home() {
   const location = useLocation();
-  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [socialLinks, setSocialLinks] = useState({ whatsapp: '', telegram: '' });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ category: '', state: '', search: '' });
@@ -104,7 +118,7 @@ export default function Home() {
       const searchLower = filter.search.toLowerCase();
       const titleMatch = blog.title?.toLowerCase().includes(searchLower);
       const contentMatch = blog.content?.toLowerCase().includes(searchLower);
-      matchesSearch = titleMatch || contentMatch;
+      matchesSearch = Boolean(titleMatch || contentMatch);
     }
 
     // Default filters
@@ -126,14 +140,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Helmet>
-        <title>Sarkari Update - Latest Sarkari Jobs, Results & Admit Cards</title>
-        <meta name="description" content="Get the latest updates on Sarkari Jobs, Results, Admit Cards, and Syllabus. Stay ahead with official government job updates and news." />
-        <meta name="keywords" content="sarkari jobs, latest jobs, sarkari result, admit card, govt jobs 2024" />
-        <meta property="og:title" content="Sarkari Update - Latest Sarkari Jobs" />
-        <meta property="og:description" content="One stop for all government job updates." />
-        <meta property="og:type" content="website" />
-      </Helmet>
+      <Seo
+        title="Sarkari Update - Latest Sarkari Jobs, Results & Admit Cards"
+        description="Get the latest updates on Sarkari Jobs, Results, Admit Cards, and Syllabus. Stay ahead with official government job updates and news."
+        keywords="sarkari jobs, latest jobs, sarkari result, admit card, govt jobs 2024"
+        type="website"
+        url={typeof window !== 'undefined' ? `${window.location.origin}${location.pathname}` : ''}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          url: typeof window !== 'undefined' ? `${window.location.origin}${location.pathname}` : '',
+          name: 'Sarkari Update',
+          description: 'Find daily Sarkari job updates, admit cards, results, and notices in one place.',
+        }}
+      />
       <PopupAd location="home" />
       <Hero onSearch={handleSearch} />
       <QuickLinks onSelect={handleCategorySelect} activeCategory={filter.category || (showStateGrid ? 'State Govt Jobs' : '')} />
@@ -167,8 +187,15 @@ export default function Home() {
           {/* Main Content */}
           <div className="flex-1 space-y-12">
             {loading ? (
-              <div className="h-96 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600" />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="animate-pulse rounded-[28px] bg-white p-6 shadow-sm border border-gray-200">
+                    <div className="h-44 rounded-3xl bg-slate-200 mb-4" />
+                    <div className="h-4 w-3/4 rounded-full bg-slate-200 mb-2" />
+                    <div className="h-4 w-full rounded-full bg-slate-200 mb-2" />
+                    <div className="h-4 w-5/6 rounded-full bg-slate-200" />
+                  </div>
+                ))}
               </div>
             ) : (
               !showStateGrid && (
@@ -225,8 +252,8 @@ export default function Home() {
                       >
                         <img 
                           src={blog.thumbnail} 
-                          alt={blog.title} 
-                          className="w-20 h-20 object-cover rounded"
+                          alt={blog.title}                         loading="lazy"
+                        decoding="async"                          className="w-20 h-20 object-cover rounded"
                           referrerPolicy="no-referrer"
                         />
                         <div className="flex-1">

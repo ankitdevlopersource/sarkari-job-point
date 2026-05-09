@@ -265,19 +265,25 @@ export default function Admin() {
 
   useEffect(() => {
     // Hidden Admin Protection Logic
+    console.log('Admin useEffect triggered, token:', token ? 'present' : 'null');
     if (location.pathname === '/avm-admin/dashboard' && !token) {
+      console.log('Redirecting to login because no token');
       navigate('/avm-admin', { replace: true });
     }
     if (location.pathname === '/avm-admin' && token) {
+      console.log('Redirecting to dashboard because token exists');
       navigate('/avm-admin/dashboard', { replace: true });
     }
 
     if (token) {
+      console.log('Token present, fetching data...');
       fetchBlogs();
       fetchSubscribers();
       fetchAds();
       fetchSettings();
       fetchPages();
+    } else {
+      console.log('No token, skipping data fetch');
     }
   }, [token, location.pathname, navigate]);
 
@@ -373,8 +379,15 @@ export default function Admin() {
       const res = await fetch('/api/admin/ads', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      if (Array.isArray(data)) setAds(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setAds(data);
+      } else if (res.status === 401) {
+        console.log('Token expired while fetching ads');
+        setToken(null);
+        localStorage.removeItem('adminToken');
+        navigate('/avm-admin', { replace: true });
+      }
     } catch (error) {
       console.error('Failed to fetch ads', error);
     }
@@ -449,10 +462,15 @@ export default function Admin() {
     console.log('Fetching blogs...');
     try {
       const res = await fetch('/api/blogs');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setBlogs(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setBlogs(data);
+        } else {
+          setBlogs([]);
+        }
       } else {
+        console.error('Failed to fetch blogs, status:', res.status);
         setBlogs([]);
       }
     } catch (error) {
@@ -466,9 +484,16 @@ export default function Admin() {
       const res = await fetch('/api/admin/subscribers', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setSubscribers(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setSubscribers(data);
+        }
+      } else if (res.status === 401) {
+        console.log('Token expired while fetching subscribers');
+        setToken(null);
+        localStorage.removeItem('adminToken');
+        navigate('/avm-admin', { replace: true });
       }
     } catch (error) {
       console.error('Failed to fetch subscribers', error);
@@ -527,10 +552,29 @@ export default function Admin() {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleCreatePost called, token:', token ? 'present' : 'null');
+    if (!token) {
+      alert('You are not logged in. Please login again.');
+      navigate('/avm-admin', { replace: true });
+      return;
+    }
+    
+    // Basic validation
+    if (!newPost.title.trim()) {
+      alert('Please enter a title for the post.');
+      return;
+    }
+    if (!newPost.content.trim()) {
+      alert('Please enter content for the post.');
+      return;
+    }
+    
+    console.log('Validation passed, submitting form...');
     setLoading(true);
     try {
       const url = editingId ? `/api/admin/blogs/${editingId}` : '/api/admin/blogs';
       const method = editingId ? 'PUT' : 'POST';
+      console.log('Making request to:', url, 'method:', method);
       
       const res = await fetch(url, {
         method,
@@ -540,14 +584,29 @@ export default function Admin() {
         },
         body: JSON.stringify(newPost),
       });
+      console.log('Response status:', res.status);
       if (res.ok) {
+        console.log('Request successful');
         setShowModal(false);
         setEditingId(null);
         setNewPost({ title: '', category: CATEGORIES[0], content: '', state: 'India', thumbnail: '', placement: PLACEMENT_OPTIONS[0] });
         fetchBlogs();
+        alert(`${editingId ? 'Post updated' : 'Post created'} successfully!`);
+      } else {
+        const errorData = await res.json();
+        console.error('Request failed:', errorData);
+        if (errorData.error === 'Token expired. Please login again.' || errorData.error === 'Invalid token') {
+          alert('Your session has expired. Please login again.');
+          setToken(null);
+          localStorage.removeItem('adminToken');
+          navigate('/avm-admin', { replace: true });
+          return;
+        }
+        alert(`Failed to ${editingId ? 'update' : 'create'} post: ${errorData.error || 'Server error'}`);
       }
     } catch (error) {
-      alert(`Failed to ${editingId ? 'update' : 'create'} post`);
+      console.error('Create/update post error:', error);
+      alert(`Failed to ${editingId ? 'update' : 'create'} post due to network error`);
     }
     setLoading(false);
   };
@@ -566,6 +625,11 @@ export default function Admin() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!token) {
+      alert('You are not logged in. Please login again.');
+      navigate('/avm-admin', { replace: true });
+      return;
+    }
     console.log('Executing blog deletion for:', id);
     try {
       const res = await fetch(`/api/admin/blogs/${id}`, {
@@ -576,9 +640,17 @@ export default function Admin() {
       if (res.ok) {
         console.log('Blog deleted successfully');
         fetchBlogs();
+        alert('Post deleted successfully!');
       } else {
         const errorData = await res.json();
         console.error('Delete blog failed:', errorData.error);
+        if (errorData.error === 'Token expired. Please login again.' || errorData.error === 'Invalid token') {
+          alert('Your session has expired. Please login again.');
+          setToken(null);
+          localStorage.removeItem('adminToken');
+          navigate('/avm-admin', { replace: true });
+          return;
+        }
         alert(`Deletion failed: ${errorData.error || 'Server error'}.`);
       }
     } catch (error) {
@@ -663,7 +735,14 @@ export default function Admin() {
         {activeTab === 'dashboard' ? (
           <>
             <div className="flex justify-between items-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+                {process.env.NODE_ENV === 'development' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Debug: Token {token ? '✅ Present' : '❌ Missing'} | Blogs: {blogs.length}
+                  </p>
+                )}
+              </div>
               <div className="flex gap-3">
                 <button 
                   onClick={() => {

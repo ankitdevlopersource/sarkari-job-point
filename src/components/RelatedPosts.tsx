@@ -26,6 +26,8 @@ export default function RelatedPosts({ posts }: RelatedPostsProps) {
               <img 
                 src={post.thumbnail} 
                 alt={post.title} 
+                loading="lazy"
+                decoding="async"
                 className="w-24 h-24 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform"
                 referrerPolicy="no-referrer"
               />

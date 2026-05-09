@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, User, Menu, X } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
@@ -34,7 +35,8 @@ export default function Navbar() {
               <Link 
                 key={link.name} 
                 to={link.path} 
-                className="text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
+                aria-current={location.pathname === link.path ? 'page' : undefined}
+                className={`text-sm font-medium transition-colors ${location.pathname === link.path ? 'text-red-600' : 'text-gray-600 hover:text-red-600'}`}
               >
                 {link.name}
               </Link>
@@ -44,6 +46,8 @@ export default function Navbar() {
           {/* Mobile Menu Toggle */}
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMenuOpen}
             className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -59,6 +63,7 @@ export default function Navbar() {
               key={link.name} 
               to={link.path} 
               onClick={() => setIsMenuOpen(false)}
+              aria-current={location.pathname === link.path ? 'page' : undefined}
               className="block py-2 text-base font-medium text-gray-700 hover:text-red-600"
             >
               {link.name}

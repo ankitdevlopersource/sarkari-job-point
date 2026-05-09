@@ -46,8 +46,8 @@ export default function Hero({ onSearch }: { onSearch: (query: string) => void }
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 px-4 md:px-6 py-3 md:py-4 text-gray-800 focus:outline-none text-sm md:text-base min-w-0"
           />
-          <button type="submit" className="bg-red-600 hover:bg-red-700 text-white px-4 md:px-8 py-3 md:py-4 font-bold transition-colors flex items-center gap-1 md:gap-2 shrink-0">
-            <Search size={18} className="md:w-5 md:h-5" />
+          <button type="submit" className="bg-red-600 hover:bg-red-700 text-white px-3 md:px-6 py-2 md:py-3 font-bold transition-colors flex items-center gap-1 md:gap-2 shrink-0">
+            <Search size={16} className="md:w-4 md:h-4" />
             <span className="text-sm md:text-base">Search</span>
           </button>
         </form>

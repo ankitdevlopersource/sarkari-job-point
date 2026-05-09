@@ -10,7 +10,7 @@ interface Job {
   category: string;
   state: string;
   thumbnail: string;
-  createdAt: any;
+  createdAt?: { seconds?: number; nanoseconds?: number } | null;
 }
 
 export default function TrendingJobs({ jobs }: { jobs: Job[] }) {
@@ -53,12 +53,14 @@ export default function TrendingJobs({ jobs }: { jobs: Job[] }) {
         <div className="flex gap-2">
           <button 
             onClick={prevSlide}
+            aria-label="Previous slide"
             className="p-1.5 md:p-2 rounded-full border border-gray-200 bg-white hover:bg-red-600 hover:text-white transition-all shadow-sm"
           >
             <ChevronLeft size={18} />
           </button>
           <button 
             onClick={nextSlide}
+            aria-label="Next slide"
             className="p-1.5 md:p-2 rounded-full border border-gray-200 bg-white hover:bg-red-600 hover:text-white transition-all shadow-sm"
           >
             <ChevronRight size={18} />
@@ -91,6 +93,8 @@ export default function TrendingJobs({ jobs }: { jobs: Job[] }) {
                     <img 
                       src={job.thumbnail} 
                       alt={job.title} 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       referrerPolicy="no-referrer"
                     />
